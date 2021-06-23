@@ -20,20 +20,20 @@ type Connection struct {
 	socketConnection websocket.Conn
 }
 
-type InChannelData struct {
+type inChannelData struct {
 	Channel     string
 	Message     string
 	messageType int
 	Connection  *Connection
 }
 
-type OutChannelData struct {
+type outChannelData struct {
 	Channel string `json:"channel"`
 	Message string `json:"message"`
 }
 
 var upgrader = websocket.Upgrader{}
-var socketDataChannel = make(chan InChannelData)
+var socketDataChannel = make(chan inChannelData)
 var channels = map[string]onChannel{}
 var connections = map[string]Connection{}
 
@@ -83,7 +83,7 @@ func disconnect(uuid string) {
 }
 
 func packChannelData(connection *Connection, messageType int, jsonString string) {
-	var channelData InChannelData
+	var channelData inChannelData
 	err := json.Unmarshal([]byte(jsonString), &channelData)
 	if err == nil {
 		channelData.Connection = connection
@@ -126,7 +126,7 @@ func (*WebSocket) On(channel string, function onChannel) {
 }
 
 func (*WebSocket) Emit(connection *Connection, messageType int, channel string, message string) {
-	channelData := OutChannelData{
+	channelData := outChannelData{
 		Channel: channel,
 		Message: message,
 	}
@@ -142,7 +142,7 @@ func (*WebSocket) Emit(connection *Connection, messageType int, channel string, 
 func (*WebSocket) Broadcast(connection *Connection, messageType int, channel string, message string) {
 	for _, conn := range connections {
 		if conn.uuid != connection.uuid {
-			channelData := OutChannelData{
+			channelData := outChannelData{
 				Channel: channel,
 				Message: message,
 			}
@@ -163,7 +163,7 @@ func (*WebSocket) EmitToClient(connection *Connection, messageType int, uuid str
 			log.Println("[use 'Emit' to send data to the current client] ")
 		}
 
-		channelData := OutChannelData{
+		channelData := outChannelData{
 			Channel: channel,
 			Message: message,
 		}
@@ -181,7 +181,7 @@ func (*WebSocket) EmitToGroup(connection *Connection, messageType int, name stri
 	for _, conn := range connections {
 		for _, group := range conn.groups {
 			if group == name {
-				channelData := OutChannelData{
+				channelData := outChannelData{
 					Channel: channel,
 					Message: message,
 				}
