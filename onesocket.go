@@ -12,7 +12,7 @@ import (
 )
 
 // SECTION: WebSocket Handler
-type onChannel func(connection *Connection, messageType int, message interface{})
+type onChannel func(connection *Connection, inDataType int, inData map[string]interface{})
 
 type Connection struct {
 	uuid             string
@@ -23,14 +23,14 @@ type Connection struct {
 type inChannelData struct {
 	Channel     string
 	RequestId   string
-	Message     interface{}
+	Message     map[string]interface{}
 	messageType int
 	Connection  *Connection
 }
 
 type outChannelData struct {
-	Channel string `json:"channel"`
-	Message string `json:"message"`
+	Channel string      `json:"channel"`
+	Message interface{} `json:"message"`
 }
 
 var upgrader = websocket.Upgrader{}
@@ -126,10 +126,10 @@ func (*WebSocket) On(channel string, function onChannel) {
 	channels["channel"] = function
 }
 
-func (*WebSocket) Emit(connection *Connection, messageType int, channel string, message string) {
+func (*WebSocket) Emit(connection *Connection, messageType int, channel string, outData interface{}) {
 	channelData := outChannelData{
 		Channel: channel,
-		Message: message,
+		Message: outData,
 	}
 	data, err := json.Marshal(channelData)
 	if err == nil {
@@ -140,7 +140,7 @@ func (*WebSocket) Emit(connection *Connection, messageType int, channel string, 
 	}
 }
 
-func (*WebSocket) Broadcast(excludeConnection *Connection, messageType int, channel string, message string) {
+func (*WebSocket) Broadcast(excludeConnection *Connection, messageType int, channel string, outData interface{}) {
 	for _, conn := range connections {
 		uuid := ""
 		if excludeConnection != nil {
@@ -149,7 +149,7 @@ func (*WebSocket) Broadcast(excludeConnection *Connection, messageType int, chan
 		if conn.uuid != uuid {
 			channelData := outChannelData{
 				Channel: channel,
-				Message: message,
+				Message: outData,
 			}
 			data, err := json.Marshal(channelData)
 			if err == nil {
@@ -162,7 +162,7 @@ func (*WebSocket) Broadcast(excludeConnection *Connection, messageType int, chan
 	}
 }
 
-func (*WebSocket) EmitToClient(connection *Connection, messageType int, uuid string, channel string, message string) {
+func (*WebSocket) EmitToClient(connection *Connection, messageType int, uuid string, channel string, outData interface{}) {
 	if conn, ok := connections[uuid]; ok {
 		if conn.uuid != connection.uuid {
 			log.Println("[use 'Emit' to send data to the current client] ")
@@ -170,7 +170,7 @@ func (*WebSocket) EmitToClient(connection *Connection, messageType int, uuid str
 
 		channelData := outChannelData{
 			Channel: channel,
-			Message: message,
+			Message: outData,
 		}
 		data, err := json.Marshal(channelData)
 		if err == nil {
@@ -182,13 +182,13 @@ func (*WebSocket) EmitToClient(connection *Connection, messageType int, uuid str
 	}
 }
 
-func (*WebSocket) EmitToGroup(connection *Connection, messageType int, name string, channel string, message string) {
+func (*WebSocket) EmitToGroup(connection *Connection, messageType int, name string, channel string, outData interface{}) {
 	for _, conn := range connections {
 		for _, group := range conn.groups {
 			if group == name {
 				channelData := outChannelData{
 					Channel: channel,
-					Message: message,
+					Message: outData,
 				}
 				data, err := json.Marshal(channelData)
 				if err == nil {
