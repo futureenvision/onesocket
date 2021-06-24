@@ -202,7 +202,7 @@ func (socket *WebSocket) ListenAndServe() {
 	addr := flag.String("addr", socket.Host+":"+fmt.Sprint(socket.Port), "http service address")
 	flag.Parse()
 	log.SetFlags(0)
-	fmt.Printf("[Servering ... %s]\n", *addr)
+	log.Printf("[Servering ... %s]\n", *addr)
 	http.HandleFunc("/echo", listener)
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }
