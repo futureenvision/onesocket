@@ -126,21 +126,21 @@ func (*WebSocket) On(channel string, function onChannel) {
 	channels["channel"] = function
 }
 
-func (*WebSocket) Emit(connection *Connection, messageType int, channel string, outData interface{}) {
+func (*WebSocket) Emit(connection *Connection, outDataType int, channel string, outData interface{}) {
 	channelData := outChannelData{
 		Channel: channel,
 		Message: outData,
 	}
 	data, err := json.Marshal(channelData)
 	if err == nil {
-		err := connection.socketConnection.WriteMessage(messageType, data)
+		err := connection.socketConnection.WriteMessage(outDataType, data)
 		if err != nil {
 			log.Println("[emit][error] -> ", err)
 		}
 	}
 }
 
-func (*WebSocket) Broadcast(excludeConnection *Connection, messageType int, channel string, outData interface{}) {
+func (*WebSocket) Broadcast(excludeConnection *Connection, outDataType int, channel string, outData interface{}) {
 	for _, conn := range connections {
 		uuid := ""
 		if excludeConnection != nil {
@@ -153,7 +153,7 @@ func (*WebSocket) Broadcast(excludeConnection *Connection, messageType int, chan
 			}
 			data, err := json.Marshal(channelData)
 			if err == nil {
-				err := conn.socketConnection.WriteMessage(messageType, data)
+				err := conn.socketConnection.WriteMessage(outDataType, data)
 				if err != nil {
 					log.Println("[emit][error] -> ", err)
 				}
@@ -162,7 +162,7 @@ func (*WebSocket) Broadcast(excludeConnection *Connection, messageType int, chan
 	}
 }
 
-func (*WebSocket) EmitToClient(connection *Connection, messageType int, uuid string, channel string, outData interface{}) {
+func (*WebSocket) EmitToClient(connection *Connection, outDataType int, uuid string, channel string, outData interface{}) {
 	if conn, ok := connections[uuid]; ok {
 		if conn.uuid != connection.uuid {
 			log.Println("[use 'Emit' to send data to the current client] ")
@@ -174,7 +174,7 @@ func (*WebSocket) EmitToClient(connection *Connection, messageType int, uuid str
 		}
 		data, err := json.Marshal(channelData)
 		if err == nil {
-			err := conn.socketConnection.WriteMessage(messageType, data)
+			err := conn.socketConnection.WriteMessage(outDataType, data)
 			if err != nil {
 				log.Println("[emit][error] -> ", err)
 			}
@@ -182,7 +182,7 @@ func (*WebSocket) EmitToClient(connection *Connection, messageType int, uuid str
 	}
 }
 
-func (*WebSocket) EmitToGroup(connection *Connection, messageType int, name string, channel string, outData interface{}) {
+func (*WebSocket) EmitToGroup(connection *Connection, outDataType int, name string, channel string, outData interface{}) {
 	for _, conn := range connections {
 		for _, group := range conn.groups {
 			if group == name {
@@ -192,7 +192,7 @@ func (*WebSocket) EmitToGroup(connection *Connection, messageType int, name stri
 				}
 				data, err := json.Marshal(channelData)
 				if err == nil {
-					err := conn.socketConnection.WriteMessage(messageType, data)
+					err := conn.socketConnection.WriteMessage(outDataType, data)
 					if err != nil {
 						log.Println("[emit][error] -> ", err)
 					}
