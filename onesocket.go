@@ -123,7 +123,7 @@ func (*WebSocket) LeaveGroup(connection *Connection, name string) {
 }
 
 func (*WebSocket) On(channel string, function onChannel) {
-	channels["channel"] = function
+	channels[channel] = function
 }
 
 func (*WebSocket) Emit(connection *Connection, outDataType int, channel string, outData interface{}) {
