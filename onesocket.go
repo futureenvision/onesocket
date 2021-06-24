@@ -141,7 +141,11 @@ func (*WebSocket) Emit(connection *Connection, messageType int, channel string, 
 
 func (*WebSocket) Broadcast(connection *Connection, messageType int, channel string, message string) {
 	for _, conn := range connections {
-		if conn.uuid != connection.uuid {
+		uuid := ""
+		if connection != nil {
+			uuid = connection.uuid
+		}
+		if conn.uuid != uuid {
 			channelData := outChannelData{
 				Channel: channel,
 				Message: message,
