@@ -12,7 +12,7 @@ import (
 )
 
 // SECTION: WebSocket Handler
-type onChannel func(connection *Connection, messageType int, message string)
+type onChannel func(connection *Connection, messageType int, message interface{})
 
 type Connection struct {
 	uuid             string
@@ -22,7 +22,8 @@ type Connection struct {
 
 type inChannelData struct {
 	Channel     string
-	Message     string
+	RequestId   string
+	Message     interface{}
 	messageType int
 	Connection  *Connection
 }
@@ -139,11 +140,11 @@ func (*WebSocket) Emit(connection *Connection, messageType int, channel string, 
 	}
 }
 
-func (*WebSocket) Broadcast(connection *Connection, messageType int, channel string, message string) {
+func (*WebSocket) Broadcast(excludeConnection *Connection, messageType int, channel string, message string) {
 	for _, conn := range connections {
 		uuid := ""
-		if connection != nil {
-			uuid = connection.uuid
+		if excludeConnection != nil {
+			uuid = excludeConnection.uuid
 		}
 		if conn.uuid != uuid {
 			channelData := outChannelData{
