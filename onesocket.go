@@ -41,7 +41,7 @@ var connections = map[string]Connection{}
 func processChan() {
 	for data := range socketDataChannel {
 		if function, ok := channels[data.Channel]; ok {
-			function(data.Connection, data.messageType, data.Message)
+			go function(data.Connection, data.messageType, data.Message)
 		}
 	}
 }
