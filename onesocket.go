@@ -15,8 +15,8 @@ import (
 type onChannel func(connection *Connection, inDataType int, inData map[string]interface{})
 
 type Connection struct {
-	uuid             string
-	groups           []string
+	Uuid             string
+	Groups           []string
 	socketConnection websocket.Conn
 }
 
@@ -53,7 +53,7 @@ func listener(w http.ResponseWriter, r *http.Request) {
 	connection := connect(socketConnection)
 	if error != nil {
 		log.Print("[upgrade][error] -> ", error)
-		disconnect(connection.uuid)
+		disconnect(connection.Uuid)
 		return
 	}
 	defer socketConnection.Close()
@@ -62,7 +62,7 @@ func listener(w http.ResponseWriter, r *http.Request) {
 		messageType, message, err := socketConnection.ReadMessage()
 		if err != nil {
 			log.Println("[read][error] -> ", err)
-			disconnect(connection.uuid)
+			disconnect(connection.Uuid)
 			break
 		}
 
@@ -72,10 +72,10 @@ func listener(w http.ResponseWriter, r *http.Request) {
 
 func connect(socketConnection *websocket.Conn) (connection Connection) {
 	connection = Connection{
-		uuid:             uuid.New().String(),
+		Uuid:             uuid.New().String(),
 		socketConnection: *socketConnection,
 	}
-	connections[connection.uuid] = connection
+	connections[connection.Uuid] = connection
 	return connection
 }
 
@@ -102,12 +102,12 @@ type WebSocket struct {
 }
 
 func (*WebSocket) JoinGroup(connection *Connection, name string) {
-	for _, value := range connection.groups {
+	for _, value := range connection.Groups {
 		if value == name {
 			return
 		}
 	}
-	connection.groups = append(connection.groups, name)
+	connection.Groups = append(connection.Groups, name)
 }
 
 func RemoveIndex(s []string, index int) []string {
@@ -115,9 +115,9 @@ func RemoveIndex(s []string, index int) []string {
 }
 
 func (*WebSocket) LeaveGroup(connection *Connection, name string) {
-	for index, value := range connection.groups {
+	for index, value := range connection.Groups {
 		if value == name {
-			connection.groups = RemoveIndex(connection.groups, index)
+			connection.Groups = RemoveIndex(connection.Groups, index)
 		}
 	}
 }
@@ -144,9 +144,9 @@ func (*WebSocket) Broadcast(excludeConnection *Connection, outDataType int, chan
 	for _, conn := range connections {
 		uuid := ""
 		if excludeConnection != nil {
-			uuid = excludeConnection.uuid
+			uuid = excludeConnection.Uuid
 		}
-		if conn.uuid != uuid {
+		if conn.Uuid != uuid {
 			channelData := outChannelData{
 				Channel: channel,
 				Message: outData,
@@ -162,21 +162,19 @@ func (*WebSocket) Broadcast(excludeConnection *Connection, outDataType int, chan
 	}
 }
 
-func (*WebSocket) EmitToClient(connection *Connection, outDataType int, uuid string, channel string, outData interface{}) {
-	if conn, ok := connections[uuid]; ok {
-		if conn.uuid != connection.uuid {
-			log.Println("[use 'Emit' to send data to the current client] ")
-		}
-
-		channelData := outChannelData{
-			Channel: channel,
-			Message: outData,
-		}
-		data, err := json.Marshal(channelData)
-		if err == nil {
-			err := conn.socketConnection.WriteMessage(outDataType, data)
-			if err != nil {
-				log.Println("[emit][error] -> ", err)
+func (*WebSocket) EmitToClient(uuid string, channel string, outDataType int, outData interface{}) {
+	for _, conn := range connections {
+		if conn.Uuid == uuid {
+			channelData := outChannelData{
+				Channel: channel,
+				Message: outData,
+			}
+			data, err := json.Marshal(channelData)
+			if err == nil {
+				err := conn.socketConnection.WriteMessage(outDataType, data)
+				if err != nil {
+					log.Println("[emit][error] -> ", err)
+				}
 			}
 		}
 	}
@@ -184,7 +182,7 @@ func (*WebSocket) EmitToClient(connection *Connection, outDataType int, uuid str
 
 func (*WebSocket) EmitToGroup(connection *Connection, outDataType int, name string, channel string, outData interface{}) {
 	for _, conn := range connections {
-		for _, group := range conn.groups {
+		for _, group := range conn.Groups {
 			if group == name {
 				channelData := outChannelData{
 					Channel: channel,
