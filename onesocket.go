@@ -208,5 +208,5 @@ func (socket *WebSocket) ListenAndServe() {
 	log.SetFlags(0)
 	log.Printf("[Servering ... %s%s]\n", *addr, socket.Endpoint)
 	http.HandleFunc(socket.Endpoint, listener)
-	log.Fatal(http.ListenAndServe(*addr, nil))
+	log.Fatal(http.ListenAndServeTLS(*addr, "server.crt", "server.key", nil))
 }
