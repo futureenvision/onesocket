@@ -207,6 +207,7 @@ func (socket *WebSocket) ListenAndServe() {
 	flag.Parse()
 	log.SetFlags(0)
 	log.Printf("[Servering ... %s%s]\n", *addr, socket.Endpoint)
+	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.HandleFunc(socket.Endpoint, listener)
 	log.Fatal(http.ListenAndServeTLS(*addr, "server.crt", "server.key", nil))
 }
