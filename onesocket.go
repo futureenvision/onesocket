@@ -1,6 +1,7 @@
 package onesocket
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -100,6 +101,7 @@ type WebSocket struct {
 	Host     string
 	Port     int16
 	Endpoint string
+	SSL      bool
 }
 
 func (*WebSocket) JoinGroup(connection *Connection, name string) {
@@ -207,7 +209,12 @@ func (socket *WebSocket) ListenAndServe() {
 	flag.Parse()
 	log.SetFlags(0)
 	log.Printf("[Servering ... %s%s]\n", *addr, socket.Endpoint)
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.HandleFunc(socket.Endpoint, listener)
-	log.Fatal(http.ListenAndServeTLS(*addr, "server.crt", "server.key", nil))
+	if socket.SSL {
+		log.Fatal(http.ListenAndServeTLS(*addr, "cert.pem", "key.pem", nil))
+	} else {
+		log.Fatal(http.ListenAndServe(*addr, nil))
+	}
 }
