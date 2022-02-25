@@ -203,14 +203,21 @@ func (*WebSocket) EmitToGroup(connection *Connection, outDataType int, name stri
 	}
 }
 
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "FE v1")
+}
+
 func (socket *WebSocket) ListenAndServe() {
 	go processChan()
+
 	addr := flag.String("addr", socket.Host+":"+fmt.Sprint(socket.Port), "http service address")
 	flag.Parse()
 	log.SetFlags(0)
 	log.Printf("[Servering ... %s%s]\n", *addr, socket.Endpoint)
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	http.Handle("/", http.FileServer(http.Dir("./static")))
+
+	http.HandleFunc("/", homeHandler)
+
 	http.HandleFunc(socket.Endpoint, listener)
 	if socket.SSL {
 		log.Fatal(http.ListenAndServeTLS(*addr, "cert.pem", "key.pem", nil))
